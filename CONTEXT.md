@@ -15,7 +15,7 @@ This project is a high-fidelity frontend clone of Airbnb’s vacation rental pla
 
 ## Core Pages to Implement
 
-### 1. Home Page (Landing)
+### 1. Home Page (`/`)
 - Top navigation bar with logo, search input, and user menu icons
 - Hero search bar with where, when, who fields
 - Horizontal scrollable category filter row (Beach, Mansions, Trending, etc.)
@@ -24,7 +24,7 @@ This project is a high-fidelity frontend clone of Airbnb’s vacation rental pla
 - Real-time search filtering on the listing cards using `useState`
 - Loading state simulation on page mount using `useEffect` + `setTimeout`
 
-### 2. Catalog / Search Results Page
+### 2. Catalog Page (`/catalog`)
 - Results header showing number of stays and a sort dropdown (Price: Low to High / High to Low)
 - Top filters (price, dates, guests, property type, amenities, etc.)
 - Reusable listing card component from the Home page
@@ -35,7 +35,7 @@ This project is a high-fidelity frontend clone of Airbnb’s vacation rental pla
 - Grid of property cards (image, title, location, rating, price)
 - Pagination or "Load more" functionality
 
-### 3. Room / Listing Detail Page
+### 3. Room Detail Page (`/rooms/[id]`)
 - Large hero image gallery with Previous/Next controls and current index state
 - Property title, location, rating, and host info
 - Host information section (avatar, name, years hosting) and reviews
