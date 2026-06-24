@@ -51,6 +51,7 @@ export const homeSections: ListingSection[] = [
   {
     id: "hotels",
     title: "Great hotels for your next trip",
+    subtitle: "Plus, get Airbnb credit when you stay at a featured hotel.",
     listings: listings.slice(10, 20),
     href: "/catalog",
   },

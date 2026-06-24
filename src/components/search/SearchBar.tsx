@@ -49,20 +49,26 @@ export function SearchBar({
   const segments = [
     {
       id: "where" as const,
-      label: "Where",
-      value: state.destination || "Search destinations",
+      label: compact ? "Where" : "Where",
+      value: compact
+        ? state.destination || "Anywhere"
+        : state.destination || "Search destinations",
       hasValue: !!state.destination,
     },
     {
       id: "when" as const,
       label: "When",
-      value: whenLabel,
+      value: compact
+        ? state.checkIn && state.checkOut
+          ? formatDateRange(state.checkIn, state.checkOut)
+          : "Anytime"
+        : whenLabel,
       hasValue: !!(state.checkIn && state.checkOut),
     },
     {
       id: "who" as const,
       label: "Who",
-      value: whoLabel,
+      value: compact && !state.guests.adults ? "Add guests" : whoLabel,
       hasValue: state.guests.adults > 0,
     },
   ];
@@ -94,7 +100,7 @@ export function SearchBar({
                 seg.hasValue ? "text-text-primary" : "text-text-secondary",
               )}
             >
-              {compact && seg.id === "where" ? "Anywhere" : seg.value}
+              {seg.value}
             </span>
           </button>
         ))}

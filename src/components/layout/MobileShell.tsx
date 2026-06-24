@@ -109,6 +109,7 @@ interface MobileShellProps {
   onCategorySelect?: (id: string) => void;
   variant?: "home" | "catalog" | "room" | "default";
   hideChrome?: boolean;
+  contentClassName?: string;
 }
 
 export function MobileShell({
@@ -122,6 +123,7 @@ export function MobileShell({
   onCategorySelect,
   variant = "default",
   hideChrome = false,
+  contentClassName,
 }: MobileShellProps) {
   const defaultTopNav =
     variant === "home" && categories && activeCategory && onCategorySelect ? (
@@ -146,6 +148,7 @@ export function MobileShell({
         className={cn(
           "min-w-0 overflow-x-hidden",
           !hideChrome && "pb-[calc(7.25rem+env(safe-area-inset-bottom))] md:pb-0",
+          contentClassName,
         )}
       >
         {children}

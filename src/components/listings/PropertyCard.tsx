@@ -5,6 +5,7 @@ import { ChevronLeftIcon, ChevronRightIcon, StarIcon } from "@/components/icons"
 import { Badge } from "@/components/ui/Badge";
 import { SafeImage } from "@/components/ui/SafeImage";
 import { useCarousel } from "@/hooks/useCarousel";
+import { avatarPhoto } from "@/lib/images";
 import { formatPrice } from "@/lib/utils";
 import type { Listing } from "@/types";
 import { cn } from "@/lib/utils";
@@ -19,6 +20,7 @@ interface PropertyCardProps {
 export function PropertyCard({ listing, variant = "grid", className }: PropertyCardProps) {
   const { index, next, prev } = useCarousel(listing.images.length);
   const showCarousel = variant === "catalog" || variant === "carousel";
+  const hostAvatar = listing.hostAvatar ?? avatarPhoto(listing.id);
 
   return (
     <Link href={`/rooms/${listing.id}`} className={cn("group block", className)}>
@@ -47,6 +49,14 @@ export function PropertyCard({ listing, variant = "grid", className }: PropertyC
             </div>
           )}
           <WishlistButton listingId={listing.id} />
+
+          {variant === "catalog" && (
+            <div className="absolute bottom-3 left-3">
+              <div className="relative size-8 overflow-hidden rounded-full border-2 border-white shadow">
+                <SafeImage src={hostAvatar} alt="Host" fill sizes="32px" />
+              </div>
+            </div>
+          )}
 
           {showCarousel && listing.images.length > 1 && (
             <>
@@ -98,35 +108,38 @@ export function PropertyCard({ listing, variant = "grid", className }: PropertyC
               <span className="flex shrink-0 items-center gap-0.5 text-xs sm:text-sm">
                 <StarIcon size={10} />
                 {listing.rating.toFixed(2)}
+                <span className="text-text-secondary">({listing.reviewCount})</span>
               </span>
             </div>
-            <p className="truncate text-xs text-text-secondary sm:text-sm">{listing.title}</p>
-            {listing.bedrooms && (
+            {listing.tagline && (
+              <p className="truncate text-xs text-text-secondary sm:text-sm">{listing.tagline}</p>
+            )}
+            {listing.bedrooms != null && listing.beds != null && (
               <p className="text-xs text-text-secondary sm:text-sm">
-                {listing.bedrooms} bed · {listing.beds} beds
+                {listing.bedrooms} bedroom{listing.bedrooms !== 1 ? "s" : ""} · {listing.beds} bed
+                {listing.beds !== 1 ? "s" : ""}
               </p>
             )}
-            {listing.hasMonthlyDiscount && listing.monthlyPrice ? (
-              <p className="text-xs sm:text-sm">
-                <span className="font-semibold">{formatPrice(listing.monthlyPrice)}</span>
-                <span className="text-text-secondary"> monthly</span>
-              </p>
-            ) : (
-              <p className="text-xs text-text-secondary sm:text-sm">
-                {listing.priceLabel ?? `${formatPrice(listing.pricePerNight)} night`}
-              </p>
+            <p className="text-xs sm:text-sm">
+              <span className="font-semibold">{formatPrice(listing.pricePerNight)}</span>
+              <span className="text-text-secondary"> per night</span>
+            </p>
+            {listing.perks && listing.perks.length > 0 && (
+              <p className="truncate text-xs text-text-secondary">{listing.perks.join(" · ")}</p>
             )}
           </>
         ) : (
           <>
             <p className="truncate text-[13px] font-semibold sm:text-[15px]">{listing.title}</p>
-            <p className="text-xs text-text-secondary sm:text-sm">
-              {listing.priceLabel ?? `${formatPrice(listing.pricePerNight)} night`}
-            </p>
-            <p className="flex items-center gap-0.5 text-xs sm:text-sm">
-              <StarIcon size={10} />
-              {listing.rating.toFixed(2)}
-            </p>
+            <div className="flex items-center justify-between gap-2 text-xs sm:text-sm">
+              <p className="text-text-secondary">
+                {listing.priceLabel ?? `${formatPrice(listing.pricePerNight)} night`}
+              </p>
+              <p className="flex shrink-0 items-center gap-0.5">
+                <StarIcon size={10} />
+                {listing.rating.toFixed(2)}
+              </p>
+            </div>
           </>
         )}
       </div>

@@ -17,20 +17,39 @@ function imagesFor(id: string, count = 3): string[] {
   return Array.from({ length: count }, (_, i) => listingPhoto(id, i));
 }
 
+const taglines = [
+  "Walk to everything",
+  "Steps from the beach",
+  "Quiet neighborhood",
+  "Ocean views",
+  "Downtown location",
+  "Family friendly",
+];
+const perksList = [
+  ["Fast Wi-Fi", "Free cancellation"],
+  ["Self check-in", "Free parking"],
+  ["Beach access", "Pet friendly"],
+  ["Great location", "Free cancellation"],
+];
+
 function makeListing(
   id: string,
   opts: Partial<Listing> & Pick<Listing, "title" | "location" | "pricePerNight">,
 ): Listing {
+  const n = Number(id);
   return {
     id,
     type: "Home",
-    rating: 4.85 + (Number(id) % 15) * 0.01,
-    reviewCount: 12 + Number(id) * 3,
+    rating: 4.85 + (n % 15) * 0.01,
+    reviewCount: 12 + n * 3,
     images: imagesFor(id),
-    beds: 2 + (Number(id) % 4),
-    bedrooms: 1 + (Number(id) % 4),
-    baths: 1 + (Number(id) % 3),
-    maxGuests: 4 + (Number(id) % 5),
+    beds: 2 + (n % 4),
+    bedrooms: 1 + (n % 4),
+    baths: 1 + (n % 3),
+    maxGuests: 4 + (n % 5),
+    tagline: taglines[n % taglines.length],
+    perks: perksList[n % perksList.length],
+    hostAvatar: avatarPhoto(`host-${id}`),
     ...opts,
   };
 }
@@ -43,8 +62,12 @@ const baseListings: Listing[] = [
     pricePerNight: 289,
     priceLabel: "$887 for 2 nights",
     rating: 4.98,
-    reviewCount: 42,
+    reviewCount: 44,
     isGuestFavorite: true,
+    isRareFind: true,
+    tagline: "Walk to everything",
+    perks: ["Fast Wi-Fi", "Free cancellation"],
+    images: imagesFor("1", 8),
     monthlyPrice: 5831,
     originalMonthlyPrice: 7027,
     hasMonthlyDiscount: true,
@@ -273,6 +296,11 @@ function buildDetail(listing: Listing): ListingDetail {
       "Fast wifi",
       "Free parking on premises",
     ],
+    highlightDetails: [
+      { title: "Top 5% of homes", description: "This home is highly ranked based on ratings, reviews, and reliability.", icon: "trophy" },
+      { title: "Self check-in", description: "Check yourself in with the keypad.", icon: "key" },
+      { title: "Great location", description: "95% of recent guests gave the location a 5-star rating.", icon: "location" },
+    ],
     host: defaultHost(listing.id, hostName),
     amenities: [
       { id: "a1", label: "Kitchen", icon: "kitchen" },
@@ -316,8 +344,13 @@ const listingDetails: Record<string, ListingDetail> = Object.fromEntries(
 listingDetails["1"] = {
   ...listingDetails["1"],
   description:
-    "Escape to The Hideaway, a beautifully renovated Cape Cod retreat minutes from the beach. Open living area, chef's kitchen, and a private backyard perfect for summer evenings.",
-  host: { ...listingDetails["1"].host, name: "Courtney", isSuperhost: true, yearsHosting: 8 },
+    "Escape to The Hideaway, a beautifully renovated Cape Cod retreat minutes from the beach. Open living area, chef's kitchen, and a private backyard perfect for summer evenings. Central Air, Roku TV, fenced-in backyard, and outdoor shower.",
+  highlightDetails: [
+    { title: "Top 5% of homes", description: "This home is highly ranked based on ratings, reviews, and reliability.", icon: "trophy" },
+    { title: "Self check-in", description: "Check yourself in with the keypad.", icon: "key" },
+    { title: "Extra spacious", description: "Guests love this home's spaciousness for hanging out.", icon: "location" },
+  ],
+  host: { ...listingDetails["1"].host, name: "Courtney", isSuperhost: true, yearsHosting: 5, reviewCount: 921, rating: 4.98 },
 };
 listingDetails["3"] = {
   ...listingDetails["3"],

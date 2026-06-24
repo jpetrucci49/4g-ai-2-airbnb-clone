@@ -1,21 +1,21 @@
 "use client";
 
-import { ChevronLeftIcon, ChevronRightIcon } from "@/components/icons";
+import { useRouter } from "next/navigation";
+import { ChevronLeftIcon, ChevronRightIcon, HeartIcon, ShareIcon } from "@/components/icons";
 import { SafeImage } from "@/components/ui/SafeImage";
 import { useCarousel } from "@/hooks/useCarousel";
 
 interface PhotoGridProps {
   images: string[];
   title: string;
-  onShowAll?: () => void;
 }
 
-export function PhotoGrid({ images, title, onShowAll }: PhotoGridProps) {
+export function PhotoGrid({ images, title }: PhotoGridProps) {
   const main = images[0];
   const rest = images.slice(1, 5);
 
   return (
-    <div className="relative hidden gap-2 overflow-hidden rounded-xl md:grid md:grid-cols-4 md:grid-rows-2 md:h-[400px]">
+    <div id="room-photos" className="relative hidden gap-2 overflow-hidden rounded-xl md:grid md:grid-cols-4 md:grid-rows-2 md:h-[400px]">
       <div className="relative col-span-2 row-span-2">
         <SafeImage src={main} alt={title} fill sizes="50vw" priority />
       </div>
@@ -24,15 +24,13 @@ export function PhotoGrid({ images, title, onShowAll }: PhotoGridProps) {
           <SafeImage src={img} alt={`${title} ${i + 2}`} fill sizes="25vw" />
         </div>
       ))}
-      {onShowAll && (
-        <button
-          type="button"
-          onClick={onShowAll}
-          className="absolute bottom-4 right-4 z-10 rounded-lg border border-border-default bg-white px-4 py-2 text-sm font-medium hover:shadow-md"
-        >
-          Show all photos
-        </button>
-      )}
+      <button
+        type="button"
+        className="absolute bottom-4 right-4 z-10 flex items-center gap-2 rounded-lg border border-border-default bg-white px-4 py-2 text-sm font-medium hover:shadow-md"
+      >
+        <span aria-hidden>▦</span>
+        Show all photos
+      </button>
     </div>
   );
 }
@@ -43,17 +41,40 @@ interface PhotoCarouselProps {
 }
 
 export function PhotoCarousel({ images, title }: PhotoCarouselProps) {
+  const router = useRouter();
   const { index, next, prev } = useCarousel(images.length);
 
   return (
-    <div className="relative aspect-[4/3] md:hidden">
-      <SafeImage
-        src={images[index]}
-        alt={title}
-        fill
-        sizes="100vw"
-        priority
-      />
+    <div id="room-photos" className="relative aspect-[4/3] md:hidden">
+      <SafeImage src={images[index]} alt={title} fill sizes="100vw" priority />
+
+      <div className="absolute inset-x-0 top-0 flex items-center justify-between p-4">
+        <button
+          type="button"
+          onClick={() => router.back()}
+          className="flex size-8 items-center justify-center rounded-full bg-white/90 shadow"
+          aria-label="Back"
+        >
+          <ChevronLeftIcon size={16} />
+        </button>
+        <div className="flex gap-2">
+          <button
+            type="button"
+            className="flex size-8 items-center justify-center rounded-full bg-white/90 shadow"
+            aria-label="Share"
+          >
+            <ShareIcon size={14} />
+          </button>
+          <button
+            type="button"
+            className="flex size-8 items-center justify-center rounded-full bg-white/90 shadow"
+            aria-label="Save"
+          >
+            <HeartIcon size={14} />
+          </button>
+        </div>
+      </div>
+
       <button
         type="button"
         onClick={prev}
@@ -70,13 +91,9 @@ export function PhotoCarousel({ images, title }: PhotoCarouselProps) {
       >
         <ChevronRightIcon size={14} />
       </button>
-      <div className="absolute bottom-3 left-1/2 flex -translate-x-1/2 gap-1">
-        {images.map((_, i) => (
-          <span
-            key={i}
-            className={`size-1.5 rounded-full ${i === index ? "bg-white" : "bg-white/50"}`}
-          />
-        ))}
+
+      <div className="absolute bottom-3 right-3 rounded-md bg-black/60 px-2 py-1 text-xs font-medium text-white">
+        {index + 1} / {images.length}
       </div>
     </div>
   );

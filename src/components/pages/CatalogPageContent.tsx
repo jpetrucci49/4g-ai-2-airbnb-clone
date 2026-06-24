@@ -2,12 +2,13 @@
 
 import { useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { LoadMoreButton } from "@/components/catalog/LoadMoreButton";
+import { Pagination } from "@/components/catalog/Pagination";
 import { MapToggle } from "@/components/catalog/MapToggle";
 import { ResultsHeader } from "@/components/catalog/ResultsHeader";
 import { Footer } from "@/components/layout/Footer";
 import { MobileShell } from "@/components/layout/MobileShell";
 import { Navbar } from "@/components/layout/Navbar";
+import { StickyCatalogNav } from "@/components/layout/StickyCatalogNav";
 import { PropertyCard } from "@/components/listings/PropertyCard";
 import { SearchBarMobile } from "@/components/search/SearchBarMobile";
 import { MapPlaceholder } from "@/components/room/MapPlaceholder";
@@ -15,7 +16,7 @@ import { filterListings } from "@/data/listings";
 import { paramsToSearchState, searchStateToParams } from "@/lib/search";
 import type { SearchState, SortOption } from "@/types";
 
-const PAGE_SIZE = 12;
+const PAGE_SIZE = 18;
 
 function sortListings<T extends { pricePerNight: number; rating: number }>(
   items: T[],
@@ -42,10 +43,9 @@ export function CatalogPageContent() {
   );
   const [activePanel, setActivePanel] = useState<"where" | "when" | "who" | null>(null);
   const [sortBy, setSortBy] = useState<SortOption>("recommended");
-  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+  const [currentPage, setCurrentPage] = useState(1);
   const [isMapVisible, setIsMapVisible] = useState(false);
   const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
-  const [isLoadingMore, setIsLoadingMore] = useState(false);
 
   const destination = searchParams.get("destination") ?? "";
   const region = searchParams.get("region") ?? "";
@@ -54,19 +54,12 @@ export function CatalogPageContent() {
     return sortListings(filterListings({ destination, region }), sortBy);
   }, [destination, region, sortBy]);
 
-  const visible = filtered.slice(0, visibleCount);
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const visible = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
 
   const handleSearch = () => {
     setIsMobileSearchOpen(false);
     router.push(`/catalog?${searchStateToParams(searchState).toString()}`);
-  };
-
-  const handleLoadMore = () => {
-    setIsLoadingMore(true);
-    setTimeout(() => {
-      setVisibleCount((c) => c + PAGE_SIZE);
-      setIsLoadingMore(false);
-    }, 400);
   };
 
   const searchLabel = searchState.destination || destination || "Search destinations";
@@ -74,7 +67,7 @@ export function CatalogPageContent() {
   const resultsGrid = (
     <>
       <ResultsHeader totalCount={filtered.length} sortBy={sortBy} onSortChange={setSortBy} />
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6">
+      <div className="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2">
         {visible.map((listing) => (
           <PropertyCard key={listing.id} listing={listing} variant="catalog" />
         ))}
@@ -84,10 +77,10 @@ export function CatalogPageContent() {
           No stays match your search. Try Cape Cod, Boston, or Portland.
         </p>
       )}
-      <LoadMoreButton
-        onClick={handleLoadMore}
-        hasMore={visibleCount < filtered.length}
-        isLoading={isLoadingMore}
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={setCurrentPage}
       />
     </>
   );
@@ -104,9 +97,9 @@ export function CatalogPageContent() {
       />
 
       <div className="hidden min-w-0 lg:flex lg:h-[calc(100vh-140px)]">
-        <div className="flex-1 overflow-y-auto px-6 py-6 lg:max-w-[55%]">{resultsGrid}</div>
-        <div className="w-[45%] shrink-0">
-          <MapPlaceholder listings={visible} className="h-full min-h-[calc(100vh-140px)]" />
+        <div className="flex-1 overflow-y-auto px-6 py-6 pb-24 lg:max-w-[55%]">{resultsGrid}</div>
+        <div className="sticky top-[140px] w-[45%] shrink-0 self-start">
+          <MapPlaceholder listings={visible} className="h-[calc(100vh-140px)]" />
         </div>
       </div>
 
@@ -126,6 +119,14 @@ export function CatalogPageContent() {
         </div>
         {!isMapVisible && <Footer />}
       </MobileShell>
+
+      <StickyCatalogNav
+        searchState={searchState}
+        activePanel={activePanel}
+        onPanelChange={setActivePanel}
+        onSearchStateChange={setSearchState}
+        onSearch={handleSearch}
+      />
 
       {!isMobileSearchOpen && !isMapVisible && (
         <MapToggle isVisible={isMapVisible} onToggle={() => setIsMapVisible(!isMapVisible)} />

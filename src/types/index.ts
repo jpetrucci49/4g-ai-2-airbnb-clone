@@ -18,6 +18,9 @@ export interface Listing {
   originalMonthlyPrice?: number;
   hasMonthlyDiscount?: boolean;
   coordinates?: { lat: number; lng: number };
+  tagline?: string;
+  perks?: string[];
+  hostAvatar?: string;
 }
 
 export interface Destination {
@@ -84,6 +87,7 @@ export type RatingBreakdown = {
 export interface ListingDetail extends Omit<Listing, "bedrooms"> {
   description: string;
   highlights: string[];
+  highlightDetails?: { title: string; description: string; icon: string }[];
   host: Host;
   amenities: Amenity[];
   bedrooms: Bedroom[];
@@ -120,6 +124,7 @@ export type SortOption =
 export interface ListingSection {
   id: string;
   title: string;
+  subtitle?: string;
   listings: Listing[];
   href?: string;
 }

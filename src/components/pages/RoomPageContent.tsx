@@ -2,25 +2,37 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
-import { ChevronLeftIcon, HeartIcon, ShareIcon } from "@/components/icons";
+import { useMemo, useState } from "react";
+import { HeartIcon, ShareIcon, StarIcon } from "@/components/icons";
 import { Footer } from "@/components/layout/Footer";
 import { MobileShell } from "@/components/layout/MobileShell";
 import { Navbar } from "@/components/layout/Navbar";
-import { SafeImage } from "@/components/ui/SafeImage";
 import { AmenitiesList } from "@/components/room/AmenitiesList";
 import { BedroomCards, ThingsToKnow } from "@/components/room/BedroomCards";
-import { BookingWidget, HostCard } from "@/components/room/BookingWidget";
+import { BookingWidget } from "@/components/room/BookingWidget";
+import { GuestFavoriteBanner } from "@/components/room/GuestFavoriteBanner";
+import { HostCard } from "@/components/room/HostCard";
 import { MapPlaceholder } from "@/components/room/MapPlaceholder";
+import { MobileBookingBar } from "@/components/room/MobileBookingBar";
 import { PhotoCarousel, PhotoGrid } from "@/components/room/PhotoGrid";
 import { ReviewsSection } from "@/components/room/ReviewsSection";
+import { RoomSubNav } from "@/components/room/RoomSubNav";
+import { DatePicker } from "@/components/search/DatePicker";
 import { SearchBarMobile } from "@/components/search/SearchBarMobile";
+import { SafeImage } from "@/components/ui/SafeImage";
 import { defaultSearchState, searchStateToParams } from "@/lib/search";
+import { formatPrice } from "@/lib/utils";
 import type { ListingDetail } from "@/types";
 
 interface RoomPageContentProps {
   listing: ListingDetail;
 }
+
+const highlightIcons: Record<string, string> = {
+  trophy: "🏆",
+  key: "🔑",
+  location: "📍",
+};
 
 export function RoomPageContent({ listing }: RoomPageContentProps) {
   const router = useRouter();
@@ -31,30 +43,26 @@ export function RoomPageContent({ listing }: RoomPageContentProps) {
   const [guests, setGuests] = useState(defaultSearchState.guests);
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
   const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
+  const [showReserveModal, setShowReserveModal] = useState(false);
+
+  const nights = useMemo(() => {
+    if (checkIn && checkOut) {
+      return Math.max(1, Math.ceil((checkOut.getTime() - checkIn.getTime()) / 86400000));
+    }
+    return 2;
+  }, [checkIn, checkOut]);
+
+  const total = listing.pricePerNight * nights;
 
   const handleSearch = () => {
     setIsMobileSearchOpen(false);
     router.push(`/catalog?${searchStateToParams(searchState).toString()}`);
   };
 
-  const roomTopNav = (
-    <div className="flex items-center gap-3 border-b border-border-light bg-white px-4 py-3">
-      <Link
-        href="/catalog"
-        className="flex size-9 shrink-0 items-center justify-center rounded-full border border-border-default"
-        aria-label="Back to catalog"
-      >
-        <ChevronLeftIcon size={16} />
-      </Link>
-      <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-semibold">{listing.title}</p>
-        <p className="truncate text-xs text-text-secondary">{listing.location}</p>
-      </div>
-      <Link href="/" className="shrink-0 text-xs font-semibold text-brand">
-        Home
-      </Link>
-    </div>
-  );
+  const handleReserve = () => setShowReserveModal(true);
+
+  const locationParts = listing.location.split(", ");
+  const breadcrumbs = ["Airbnb", "United States", locationParts[1] ?? "Massachusetts", locationParts[0]];
 
   return (
     <>
@@ -67,17 +75,22 @@ export function RoomPageContent({ listing }: RoomPageContentProps) {
         onSearch={handleSearch}
       />
 
+      <RoomSubNav
+        listing={listing}
+        nights={nights}
+        total={total}
+        onReserve={handleReserve}
+      />
+
       <MobileShell
         variant="room"
-        topNav={roomTopNav}
         onSearchOpen={() => setIsMobileSearchOpen(true)}
         searchLabel="Search destinations"
         activeTab="explore"
         hideChrome={isMobileSearchOpen}
+        contentClassName="pb-[calc(10rem+env(safe-area-inset-bottom))] md:pb-0"
       >
-        <div className="relative overflow-hidden md:hidden">
-          <PhotoCarousel images={listing.images} title={listing.title} />
-        </div>
+        <PhotoCarousel images={listing.images} title={listing.title} />
 
         <main className="mx-auto max-w-7xl px-4 py-4 sm:px-6 sm:py-6">
           <div className="mb-4 hidden items-start justify-between md:flex">
@@ -92,22 +105,40 @@ export function RoomPageContent({ listing }: RoomPageContentProps) {
             </div>
           </div>
 
-          <div className="hidden md:block">
-            <PhotoGrid images={listing.images} title={listing.title} />
-          </div>
+          <PhotoGrid images={listing.images} title={listing.title} />
 
           <div className="mt-2 grid gap-12 md:mt-6 lg:grid-cols-[1fr_380px] lg:gap-16">
             <div className="min-w-0">
               <div className="border-b border-border-light pb-6">
                 <h1 className="text-xl font-semibold md:hidden">{listing.title}</h1>
-                <p className="mt-1 text-sm text-text-secondary sm:text-base">
+                <p className="mt-1 text-sm font-medium sm:text-base">
                   {listing.type} in {listing.location}
                 </p>
                 <p className="mt-2 text-sm text-text-secondary">
                   {listing.maxGuests} guests · {listing.bedrooms.length} bedrooms ·{" "}
                   {listing.beds} beds · {listing.baths} baths
                 </p>
+                <div className="mt-3 flex flex-wrap items-center gap-3 md:hidden">
+                  <span className="flex items-center gap-1 text-sm font-medium">
+                    <StarIcon size={12} />
+                    {listing.rating.toFixed(2)}
+                  </span>
+                  <button type="button" className="text-sm underline">
+                    ({listing.reviewCount} reviews)
+                  </button>
+                  {listing.isGuestFavorite && (
+                    <span className="rounded-lg border border-border-default px-2 py-0.5 text-xs font-medium">
+                      Guest favorite
+                    </span>
+                  )}
+                </div>
               </div>
+
+              {listing.isGuestFavorite && (
+                <div className="hidden md:block">
+                  <GuestFavoriteBanner rating={listing.rating} reviewCount={listing.reviewCount} />
+                </div>
+              )}
 
               <div className="flex items-center gap-4 border-b border-border-light py-6">
                 <div className="relative size-12 shrink-0 overflow-hidden rounded-full">
@@ -123,11 +154,18 @@ export function RoomPageContent({ listing }: RoomPageContentProps) {
               </div>
 
               <div className="border-b border-border-light py-6">
-                <ul className="space-y-3 text-sm sm:text-base">
-                  {listing.highlights.map((h) => (
-                    <li key={h} className="flex items-start gap-3">
-                      <span>✓</span>
-                      <span className="font-medium">{h}</span>
+                <ul className="space-y-5">
+                  {(listing.highlightDetails ?? listing.highlights.map((h) => ({ title: h, description: "", icon: "key" }))).map((item) => (
+                    <li key={item.title} className="flex items-start gap-4">
+                      <span className="text-xl" aria-hidden>
+                        {highlightIcons[item.icon] ?? "✓"}
+                      </span>
+                      <div>
+                        <p className="font-medium">{item.title}</p>
+                        {item.description && (
+                          <p className="text-sm text-text-secondary">{item.description}</p>
+                        )}
+                      </div>
                     </li>
                   ))}
                 </ul>
@@ -140,44 +178,81 @@ export function RoomPageContent({ listing }: RoomPageContentProps) {
                 <button
                   type="button"
                   onClick={() => setIsDescriptionExpanded(!isDescriptionExpanded)}
-                  className="mt-2 text-sm font-semibold underline"
+                  className="mt-3 rounded-lg border border-border-default px-4 py-2 text-sm font-semibold hover:bg-bg-subtle md:mt-2 md:border-0 md:p-0 md:underline md:hover:bg-transparent"
                 >
                   {isDescriptionExpanded ? "Show less" : "Show more"}
                 </button>
               </div>
 
-              <div className="lg:hidden">
-                <BookingWidget
-                  listing={listing}
-                  checkIn={checkIn}
-                  checkOut={checkOut}
-                  guests={guests}
-                  onCheckInChange={setCheckIn}
-                  onCheckOutChange={setCheckOut}
-                  onGuestsChange={setGuests}
-                  className="my-8"
+              <BedroomCards bedrooms={listing.bedrooms} />
+              <div id="room-amenities">
+                <AmenitiesList amenities={listing.amenities} />
+              </div>
+              <div id="room-reviews">
+                <ReviewsSection
+                  reviews={listing.reviews}
+                  rating={listing.rating}
+                  reviewCount={listing.reviewCount}
+                  ratingBreakdown={listing.ratingBreakdown}
+                  isGuestFavorite={listing.isGuestFavorite}
                 />
               </div>
 
-              <BedroomCards bedrooms={listing.bedrooms} />
-              <AmenitiesList amenities={listing.amenities} />
-              <ReviewsSection
-                reviews={listing.reviews}
-                rating={listing.rating}
-                reviewCount={listing.reviewCount}
-                ratingBreakdown={listing.ratingBreakdown}
-                isGuestFavorite={listing.isGuestFavorite}
-              />
               <div className="border-t border-border-light py-8">
-                <h2 className="mb-4 text-lg font-semibold">Where you&apos;ll be</h2>
-                <MapPlaceholder className="h-64 rounded-xl sm:h-80" />
+                <h2 className="mb-2 text-[22px] font-semibold">
+                  {nights} nights in {locationParts[0]}
+                </h2>
+                {checkIn && checkOut && (
+                  <p className="mb-6 text-sm text-text-secondary">
+                    {checkIn.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                    {" – "}
+                    {checkOut.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                  </p>
+                )}
+                <DatePicker
+                  checkIn={checkIn}
+                  checkOut={checkOut}
+                  onChange={(inDate, outDate) => {
+                    setCheckIn(inDate);
+                    setCheckOut(outDate);
+                  }}
+                  monthsToShow={2}
+                />
               </div>
+
+              <div id="room-location" className="border-t border-border-light py-8">
+                <h2 className="mb-2 text-[22px] font-semibold">Where you&apos;ll be</h2>
+                <p className="mb-4 text-sm text-text-secondary">
+                  {listing.location}, United States
+                </p>
+                <MapPlaceholder className="h-64 rounded-xl sm:h-80" />
+                <p className="mt-4 text-sm text-text-secondary">
+                  Exact location will be provided after booking.
+                </p>
+                <button type="button" className="mt-2 text-sm font-semibold underline">
+                  Show more
+                </button>
+              </div>
+
               <HostCard host={listing.host} />
               <ThingsToKnow
                 houseRules={listing.houseRules}
                 safetyInfo={listing.safetyInfo}
                 cancellationPolicy={listing.cancellationPolicy}
               />
+
+              <nav className="flex flex-wrap items-center gap-1 py-6 text-sm text-text-secondary">
+                {breadcrumbs.map((crumb, i) => (
+                  <span key={crumb} className="flex items-center gap-1">
+                    {i > 0 && <span>›</span>}
+                    {i < breadcrumbs.length - 1 ? (
+                      <Link href="#" className="hover:underline">{crumb}</Link>
+                    ) : (
+                      <span>{crumb}</span>
+                    )}
+                  </span>
+                ))}
+              </nav>
             </div>
 
             <div className="hidden lg:block">
@@ -190,6 +265,7 @@ export function RoomPageContent({ listing }: RoomPageContentProps) {
                   onCheckInChange={setCheckIn}
                   onCheckOutChange={setCheckOut}
                   onGuestsChange={setGuests}
+                  onReserve={handleReserve}
                 />
               </div>
             </div>
@@ -199,6 +275,13 @@ export function RoomPageContent({ listing }: RoomPageContentProps) {
         <Footer />
       </MobileShell>
 
+      <MobileBookingBar
+        listing={listing}
+        nights={nights}
+        total={total}
+        onReserve={handleReserve}
+      />
+
       <SearchBarMobile
         isOpen={isMobileSearchOpen}
         onClose={() => setIsMobileSearchOpen(false)}
@@ -206,6 +289,24 @@ export function RoomPageContent({ listing }: RoomPageContentProps) {
         onStateChange={setSearchState}
         onSearch={handleSearch}
       />
+
+      {showReserveModal && (
+        <div className="fixed inset-0 z-[100] flex items-end justify-center bg-black/40 md:items-center">
+          <div className="w-full max-w-md rounded-t-2xl bg-white p-6 md:rounded-2xl">
+            <h3 className="mb-2 text-lg font-semibold">Confirm reservation</h3>
+            <p className="mb-4 text-sm text-text-secondary">
+              Total: <strong>{formatPrice(total)}</strong> for {nights} nights at {listing.title}
+            </p>
+            <button
+              type="button"
+              onClick={() => setShowReserveModal(false)}
+              className="w-full rounded-lg bg-brand py-3 font-semibold text-white"
+            >
+              Confirm
+            </button>
+          </div>
+        </div>
+      )}
     </>
   );
 }

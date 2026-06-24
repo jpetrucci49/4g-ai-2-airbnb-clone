@@ -14,7 +14,7 @@ export function ResultsHeader({ totalCount, sortBy, onSortChange }: ResultsHeade
   return (
     <div className="mb-6 flex items-center justify-between">
       <p className="text-sm text-text-secondary">
-        <span className="font-semibold text-text-primary">{totalCount}+</span> stays
+        Over <span className="font-semibold text-text-primary">{Math.max(totalCount, 1000).toLocaleString()}</span> homes
       </p>
       <SortDropdown value={sortBy} onChange={onSortChange} />
     </div>

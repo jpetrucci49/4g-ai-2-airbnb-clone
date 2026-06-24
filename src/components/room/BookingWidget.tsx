@@ -1,8 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { SafeImage } from "@/components/ui/SafeImage";
-import { StarIcon } from "@/components/icons";
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import { formatPrice } from "@/lib/utils";
@@ -16,7 +14,20 @@ interface BookingWidgetProps {
   onCheckInChange: (date: Date | null) => void;
   onCheckOutChange: (date: Date | null) => void;
   onGuestsChange: (guests: GuestCounts) => void;
+  onReserve?: () => void;
   className?: string;
+  showRareFind?: boolean;
+}
+
+export function RareFindBanner() {
+  return (
+    <div className="mb-3 flex items-center gap-2 rounded-xl border border-border-default bg-white px-4 py-3 text-sm shadow-sm">
+      <span className="text-brand" aria-hidden>◆</span>
+      <span>
+        <span className="font-semibold">Rare find!</span> This place is usually booked
+      </span>
+    </div>
+  );
 }
 
 export function BookingWidget({
@@ -27,7 +38,9 @@ export function BookingWidget({
   onCheckInChange,
   onCheckOutChange,
   onGuestsChange,
+  onReserve,
   className,
+  showRareFind = true,
 }: BookingWidgetProps) {
   const [showModal, setShowModal] = useState(false);
   const nights =
@@ -36,18 +49,23 @@ export function BookingWidget({
       : 2;
   const total = listing.pricePerNight * nights;
 
-  const handleReserve = () => setShowModal(true);
+  const handleReserve = () => {
+    if (onReserve) onReserve();
+    else setShowModal(true);
+  };
 
   return (
     <>
+      {showRareFind && (listing.isRareFind || listing.isGuestFavorite) && <RareFindBanner />}
+
       <div
         className={`rounded-xl border border-border-default bg-white p-6 shadow-lg ${className ?? ""}`}
       >
         <div className="mb-4 flex items-baseline gap-1">
-          <span className="text-[22px] font-semibold">
-            {formatPrice(listing.pricePerNight)}
+          <span className="text-[22px] font-semibold underline decoration-1 underline-offset-2">
+            {formatPrice(total)}
           </span>
-          <span className="text-text-secondary">night</span>
+          <span className="text-text-secondary">for {nights} nights</span>
         </div>
 
         <div className="mb-4 overflow-hidden rounded-lg border border-border-default">
@@ -93,6 +111,10 @@ export function BookingWidget({
           </label>
         </div>
 
+        <div className="mb-4 rounded-lg bg-bg-subtle px-4 py-3 text-center text-sm">
+          $0 today · Free cancellation
+        </div>
+
         <Button fullWidth size="lg" onClick={handleReserve} className="rounded-lg">
           Reserve
         </Button>
@@ -114,18 +136,6 @@ export function BookingWidget({
             </div>
           </div>
         )}
-
-        {listing.isGuestFavorite && (
-          <div className="mt-4 flex items-center gap-2 rounded-lg bg-bg-subtle p-3 text-sm">
-            <span>🏆</span>
-            <span className="font-medium">Guest favorite</span>
-            <span className="text-text-secondary">· One of the most loved homes</span>
-          </div>
-        )}
-
-        <button type="button" className="mt-4 text-sm text-text-secondary underline">
-          Report this listing
-        </button>
       </div>
 
       <Modal isOpen={showModal} onClose={() => setShowModal(false)} title="Confirm reservation">
@@ -140,42 +150,5 @@ export function BookingWidget({
         </Button>
       </Modal>
     </>
-  );
-}
-
-interface HostCardProps {
-  host: ListingDetail["host"];
-}
-
-export function HostCard({ host }: HostCardProps) {
-  return (
-    <div className="border-t border-border-light py-8">
-      <div className="flex items-start gap-4">
-        <div className="relative size-16 shrink-0 overflow-hidden rounded-full">
-          <SafeImage src={host.avatar} alt={host.name} fill sizes="64px" />
-        </div>
-        <div className="flex-1">
-          <h3 className="text-xl font-semibold">Hosted by {host.name}</h3>
-          {host.isSuperhost && (
-            <p className="text-sm text-text-secondary">Superhost · {host.yearsHosting} years hosting</p>
-          )}
-          <div className="mt-2 flex gap-4 text-sm text-text-secondary">
-            <span>{host.reviewCount} reviews</span>
-            <span className="flex items-center gap-0.5">
-              <StarIcon size={12} />
-              {host.rating} rating
-            </span>
-          </div>
-        </div>
-      </div>
-      <p className="mt-4 text-text-secondary">{host.bio}</p>
-      <div className="mt-4 space-y-1 text-sm text-text-secondary">
-        <p>Response rate: {host.responseRate}</p>
-        <p>Responds {host.responseTime}</p>
-      </div>
-      <Button variant="outline" className="mt-4">
-        Message host
-      </Button>
-    </div>
   );
 }
