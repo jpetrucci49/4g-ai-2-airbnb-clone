@@ -2,13 +2,10 @@
 
 import { useRef, useEffect } from "react";
 import { SearchIcon } from "@/components/icons";
-import { formatGuestSummary } from "@/lib/search";
-import { formatDateRange } from "@/lib/utils";
+import { buildSearchSegments } from "@/lib/searchBarSegments";
 import type { SearchState } from "@/types";
 import { cn } from "@/lib/utils";
-import { WhenPanel } from "./WhenPanel";
-import { WherePanel } from "./WherePanel";
-import { WhoPanel } from "./WhoPanel";
+import { SearchBarDropdown } from "./SearchBarDropdown";
 
 interface SearchBarProps {
   state: SearchState;
@@ -39,48 +36,11 @@ export function SearchBar({
     return () => document.removeEventListener("mousedown", handler);
   }, [onPanelChange]);
 
-  const whenLabel =
-    state.checkIn && state.checkOut
-      ? formatDateRange(state.checkIn, state.checkOut)
-      : "Add dates";
-
-  const whoLabel = formatGuestSummary(state.guests);
-
-  const segments = [
-    {
-      id: "where" as const,
-      label: compact ? "Where" : "Where",
-      value: compact
-        ? state.destination || "Anywhere"
-        : state.destination || "Search destinations",
-      hasValue: !!state.destination,
-    },
-    {
-      id: "when" as const,
-      label: "When",
-      value: compact
-        ? state.checkIn && state.checkOut
-          ? formatDateRange(state.checkIn, state.checkOut)
-          : "Anytime"
-        : whenLabel,
-      hasValue: !!(state.checkIn && state.checkOut),
-    },
-    {
-      id: "who" as const,
-      label: "Who",
-      value: compact && !state.guests.adults ? "Add guests" : whoLabel,
-      hasValue: state.guests.adults > 0,
-    },
-  ];
+  const segments = buildSearchSegments(state, compact);
 
   return (
     <div ref={containerRef} className="relative hidden md:block">
-      <div
-        className={cn(
-          "flex items-center rounded-full border border-border-light bg-white shadow-search transition-shadow",
-          compact ? "text-sm" : "",
-        )}
-      >
+      <div className={cn("flex items-center rounded-full border border-border-light bg-white shadow-search", compact && "text-sm")}>
         {segments.map((seg, i) => (
           <button
             key={seg.id}
@@ -94,57 +54,14 @@ export function SearchBar({
             )}
           >
             <span className="text-xs font-semibold">{seg.label}</span>
-            <span
-              className={cn(
-                "truncate text-sm",
-                seg.hasValue ? "text-text-primary" : "text-text-secondary",
-              )}
-            >
-              {seg.value}
-            </span>
+            <span className={cn("truncate text-sm", seg.hasValue ? "text-text-primary" : "text-text-secondary")}>{seg.value}</span>
           </button>
         ))}
-        <button
-          type="button"
-          onClick={onSearch}
-          className="m-2 flex size-12 shrink-0 items-center justify-center rounded-full bg-brand text-white hover:bg-brand-dark"
-          aria-label="Search"
-        >
+        <button type="button" onClick={onSearch} className="m-2 flex size-12 shrink-0 items-center justify-center rounded-full bg-brand text-white hover:bg-brand-dark" aria-label="Search">
           <SearchIcon size={16} className="text-white" />
         </button>
       </div>
-
-      {activePanel && (
-        <div className="absolute left-1/2 top-full z-50 mt-3 w-[min(850px,90vw)] -translate-x-1/2 rounded-3xl bg-white shadow-dropdown">
-          {activePanel === "where" && (
-            <WherePanel
-              onSelect={(dest) => {
-                onStateChange({ ...state, destination: dest.name, destinationId: dest.id });
-                onPanelChange("when");
-              }}
-            />
-          )}
-          {activePanel === "when" && (
-            <WhenPanel
-              checkIn={state.checkIn}
-              checkOut={state.checkOut}
-              flexibleDays={state.flexibleDays ?? 0}
-              onDateChange={(checkIn, checkOut) =>
-                onStateChange({ ...state, checkIn, checkOut })
-              }
-              onFlexibleChange={(flexibleDays) =>
-                onStateChange({ ...state, flexibleDays })
-              }
-            />
-          )}
-          {activePanel === "who" && (
-            <WhoPanel
-              guests={state.guests}
-              onChange={(guests) => onStateChange({ ...state, guests })}
-            />
-          )}
-        </div>
-      )}
+      {activePanel && <SearchBarDropdown activePanel={activePanel} state={state} onStateChange={onStateChange} onPanelChange={onPanelChange} />}
     </div>
   );
 }

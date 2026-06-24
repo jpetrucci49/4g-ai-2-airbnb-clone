@@ -6,9 +6,8 @@ import { CategoryBar } from "@/components/layout/CategoryBar";
 import { Footer } from "@/components/layout/Footer";
 import { MobileShell } from "@/components/layout/MobileShell";
 import { Navbar } from "@/components/layout/Navbar";
-import { ListingSection } from "@/components/listings/ListingSection";
+import { HomeListings } from "@/components/pages/HomeListings";
 import { SearchBarMobile } from "@/components/search/SearchBarMobile";
-import { ListingSectionSkeleton } from "@/components/ui/Skeleton";
 import { homeCategories } from "@/data/categories";
 import { homeSections } from "@/data/sections";
 import { LOADING_DELAY_MS } from "@/lib/constants";
@@ -35,9 +34,7 @@ export function HomePageContent() {
       .map((section) => ({
         ...section,
         listings: section.listings.filter(
-          (l) =>
-            l.title.toLowerCase().includes(q) ||
-            l.location.toLowerCase().includes(q),
+          (l) => l.title.toLowerCase().includes(q) || l.location.toLowerCase().includes(q),
         ),
       }))
       .filter((s) => s.listings.length > 0);
@@ -48,60 +45,19 @@ export function HomePageContent() {
     router.push(`/catalog?${searchStateToParams(searchState).toString()}`);
   };
 
-  const searchLabel = searchState.destination || "Start your search";
-
   return (
     <>
-      <Navbar
-        variant="home"
-        searchState={searchState}
-        activePanel={activePanel}
-        onPanelChange={setActivePanel}
-        onSearchStateChange={setSearchState}
-        onSearch={handleSearch}
-      />
-
+      <Navbar variant="home" searchState={searchState} activePanel={activePanel} onPanelChange={setActivePanel} onSearchStateChange={setSearchState} onSearch={handleSearch} />
       <div className="hidden md:block">
-        <CategoryBar
-          categories={homeCategories}
-          activeId={activeCategory}
-          onSelect={setActiveCategory}
-        />
+        <CategoryBar categories={homeCategories} activeId={activeCategory} onSelect={setActiveCategory} />
       </div>
-
-      <MobileShell
-        variant="home"
-        onSearchOpen={() => setIsMobileSearchOpen(true)}
-        searchLabel={searchLabel}
-        activeTab="explore"
-        categories={homeCategories}
-        activeCategory={activeCategory}
-        onCategorySelect={setActiveCategory}
-        hideChrome={isMobileSearchOpen}
-      >
+      <MobileShell variant="home" onSearchOpen={() => setIsMobileSearchOpen(true)} searchLabel={searchState.destination || "Start your search"} activeTab="explore" categories={homeCategories} activeCategory={activeCategory} onCategorySelect={setActiveCategory} hideChrome={isMobileSearchOpen}>
         <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-4 sm:px-6 sm:py-8">
-          {isLoading ? (
-            <div className="space-y-10">
-              {Array.from({ length: 4 }).map((_, i) => (
-                <ListingSectionSkeleton key={i} />
-              ))}
-            </div>
-          ) : (
-            filteredSections.map((section) => (
-              <ListingSection key={section.id} section={section} />
-            ))
-          )}
+          <HomeListings isLoading={isLoading} sections={filteredSections} />
         </main>
         <Footer />
       </MobileShell>
-
-      <SearchBarMobile
-        isOpen={isMobileSearchOpen}
-        onClose={() => setIsMobileSearchOpen(false)}
-        state={searchState}
-        onStateChange={setSearchState}
-        onSearch={handleSearch}
-      />
+      <SearchBarMobile isOpen={isMobileSearchOpen} onClose={() => setIsMobileSearchOpen(false)} state={searchState} onStateChange={setSearchState} onSearch={handleSearch} />
     </>
   );
 }
