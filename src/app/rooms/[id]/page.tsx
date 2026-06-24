@@ -1,41 +1,28 @@
-import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
+import { RoomPageContent } from "@/components/pages/RoomPageContent";
+import { getListingDetailById, listings } from "@/data/listings";
 
 type RoomPageProps = {
   params: Promise<{ id: string }>;
 };
 
 export async function generateStaticParams() {
-  return [{ id: "1" }, { id: "2" }, { id: "3" }];
+  return listings.map((l) => ({ id: l.id }));
 }
 
-export async function generateMetadata({
-  params,
-}: RoomPageProps): Promise<Metadata> {
+export async function generateMetadata({ params }: RoomPageProps) {
   const { id } = await params;
-  return { title: `Room ${id}` };
+  const listing = getListingDetailById(id);
+  return { title: listing?.title ?? `Room ${id}` };
 }
 
 export default async function RoomPage({ params }: RoomPageProps) {
   const { id } = await params;
+  const listing = getListingDetailById(id);
 
-  if (!["1", "2", "3"].includes(id)) {
+  if (!listing) {
     notFound();
   }
 
-  return (
-    <main className="mx-auto w-full max-w-7xl flex-1 px-6 py-12">
-      <h1 className="text-2xl font-semibold">Room {id}</h1>
-      <p className="mt-2 text-text-secondary">
-        Listing detail page — coming soon.
-      </p>
-      <Link
-        href="/catalog"
-        className="mt-6 inline-block text-sm text-brand hover:underline"
-      >
-        ← Back to catalog
-      </Link>
-    </main>
-  );
+  return <RoomPageContent listing={listing} />;
 }
