@@ -15,6 +15,8 @@ export function useRoomPageState() {
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
   const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
   const [showReserveModal, setShowReserveModal] = useState(false);
+  const [showGallery, setShowGallery] = useState(false);
+  const [galleryIndex, setGalleryIndex] = useState(0);
 
   const nights = useMemo(() => {
     if (checkIn && checkOut) {
@@ -45,6 +47,10 @@ export function useRoomPageState() {
     setIsMobileSearchOpen,
     showReserveModal,
     setShowReserveModal,
+    showGallery,
+    setShowGallery,
+    galleryIndex,
+    setGalleryIndex,
     nights,
     handleSearch,
     handleReserve: () => setShowReserveModal(true),

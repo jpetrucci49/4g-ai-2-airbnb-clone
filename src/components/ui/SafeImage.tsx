@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import { PLACEHOLDER_IMAGE } from "@/lib/images";
 import { cn } from "@/lib/utils";
@@ -28,10 +28,14 @@ export function SafeImage({
 }: SafeImageProps) {
   const [imgSrc, setImgSrc] = useState(src);
 
+  useEffect(() => {
+    setImgSrc(src);
+  }, [src]);
+
   const common = {
     src: imgSrc,
     alt,
-    className: cn(className, fill && "object-cover"),
+    className: cn(fill && "object-cover", className),
     sizes,
     priority,
     onError: () => setImgSrc(PLACEHOLDER_IMAGE),
